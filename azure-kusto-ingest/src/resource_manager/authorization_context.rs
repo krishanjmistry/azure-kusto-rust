@@ -53,9 +53,7 @@ impl AuthorizationContext {
     }
 
     /// Executes a KQL query to get the Kusto identity token from the management endpoint
-    async fn query_kusto_identity_token(
-        &self,
-    ) -> Result<KustoIdentityToken> {
+    async fn query_kusto_identity_token(&self) -> Result<KustoIdentityToken> {
         let results = self
             .client
             .execute_command("NetDefaultDB", ".get kusto identity token", None)
@@ -102,15 +100,17 @@ impl AuthorizationContext {
 
     /// Fetches the latest Kusto identity token, either retrieving from cache if valid, or by executing a KQL query
     pub(crate) async fn get(&self) -> Result<KustoIdentityToken> {
-        // Attempt to get the token from the cache
-        let token_cache = self.token_cache.read().await;
-        if !token_cache.is_expired() {
-            if let Some(token) = token_cache.get() {
-                return Ok(token.clone());
+        // first, try to get the resources from the cache by obtaining a read lock
+        {
+            let token_cache = self.token_cache.read().await;
+            if !token_cache.is_expired() {
+                if let Some(token) = token_cache.get() {
+                    return Ok(token.clone());
+                }
             }
         }
-        // Drop the read lock and get a write lock to refresh the token
-        drop(token_cache);
+
+        // obtain a write lock to refresh the kusto response
         let mut token_cache = self.token_cache.write().await;
 
         // Again attempt to return from cache, check is done in case another thread

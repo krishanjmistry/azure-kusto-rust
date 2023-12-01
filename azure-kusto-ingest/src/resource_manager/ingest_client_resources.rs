@@ -45,10 +45,7 @@ fn get_column_index(table: &TableV1, column_name: &str) -> Result<usize> {
 }
 
 /// Helper to get a resource URI from a table, erroring if there are no resources of the given name
-fn get_resource_by_name(
-    table: &TableV1,
-    resource_name: String,
-) -> Result<Vec<ResourceUri>> {
+fn get_resource_by_name(table: &TableV1, resource_name: String) -> Result<Vec<ResourceUri>> {
     let storage_root_index = get_column_index(table, "StorageRoot")?;
     let resource_type_name_index = get_column_index(table, "ResourceTypeName")?;
 
@@ -129,9 +126,7 @@ impl IngestClientResources {
     }
 
     /// Executes a KQL management query that retrieves resource URIs for the various Azure resources used for ingestion
-    async fn query_ingestion_resources(
-        &self,
-    ) -> Result<InnerIngestClientResources> {
+    async fn query_ingestion_resources(&self) -> Result<InnerIngestClientResources> {
         let results = self
             .client
             .execute_command("NetDefaultDB", ".get ingestion resources", None)
@@ -147,15 +142,17 @@ impl IngestClientResources {
 
     /// Gets the latest resources either from cache, or fetching from Kusto and updating the cached resources
     pub async fn get(&self) -> Result<InnerIngestClientResources> {
-        let resources = self.resources.read().await;
-        if !resources.is_expired() {
-            if let Some(inner_value) = resources.get() {
-                return Ok(inner_value.clone());
+        // first, try to get the resources from the cache by obtaining a read lock
+        {
+            let resources = self.resources.read().await;
+            if !resources.is_expired() {
+                if let Some(inner_value) = resources.get() {
+                    return Ok(inner_value.clone());
+                }
             }
         }
 
-        // otherwise, drop the read lock and get a write lock to refresh the kusto response
-        drop(resources);
+        // obtain a write lock to refresh the kusto response
         let mut resources = self.resources.write().await;
 
         // check again in case another thread refreshed while we were waiting on the write lock

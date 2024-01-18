@@ -1,5 +1,4 @@
 //! Defines [Error] for representing failures in various operations.
-use std::fmt::Debug;
 
 use thiserror;
 

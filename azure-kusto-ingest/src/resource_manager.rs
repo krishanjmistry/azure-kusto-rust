@@ -18,9 +18,7 @@ use self::{
     ingest_client_resources::IngestClientResources,
 };
 
-use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
-use rand::SeedableRng;
+use rand::{rngs::StdRng, seq::SliceRandom, SeedableRng};
 
 pub const RESOURCE_REFRESH_PERIOD: Duration = Duration::from_secs(60 * 60);
 

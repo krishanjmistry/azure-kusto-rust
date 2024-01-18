@@ -49,13 +49,9 @@ impl TryFrom<&str> for ResourceUri {
             .host_str()
             .expect("Url::parse should always return a host for a URI");
 
-        let service_uri = scheme
-            + "://"
-            + host_string;
+        let service_uri = scheme + "://" + host_string;
 
-
-        let host_string_components = host_string
-            .split_terminator('.').collect::<Vec<_>>();
+        let host_string_components = host_string.split_terminator('.').collect::<Vec<_>>();
         if host_string_components.len() < 2 {
             return Err(ResourceUriError::MissingAccountName);
         }

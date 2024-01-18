@@ -7,13 +7,12 @@ use tokio::sync::RwLock;
 use super::cache::{Cached, ThreadSafeCachedValue};
 use super::utils::get_column_index;
 use super::RESOURCE_REFRESH_PERIOD;
-use thiserror::Error;
 
 pub(crate) type KustoIdentityToken = String;
 
 const AUTHORIZATION_CONTEXT: &str = "AuthorizationContext";
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum KustoIdentityTokenError {
     #[error("Kusto expected 1 table in results, found {0}")]
     ExpectedOneTable(usize),

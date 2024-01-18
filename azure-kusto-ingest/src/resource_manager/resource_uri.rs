@@ -4,9 +4,7 @@ use azure_storage_blobs::prelude::{ClientBuilder, ContainerClient};
 use azure_storage_queues::{QueueClient, QueueServiceClientBuilder};
 use url::Url;
 
-use thiserror::Error;
-
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ResourceUriError {
     #[error("URI scheme must be 'https', was '{0}'")]
     InvalidScheme(String),

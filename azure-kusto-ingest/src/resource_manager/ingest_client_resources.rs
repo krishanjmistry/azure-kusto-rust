@@ -12,10 +12,9 @@ use azure_kusto_data::{models::TableV1, prelude::KustoClient};
 use azure_storage_blobs::prelude::ContainerClient;
 use azure_storage_queues::QueueClient;
 use serde_json::Value;
-use thiserror::Error;
 use tokio::sync::RwLock;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum IngestionResourceError {
     #[error("{column_name} column is missing in the table")]
     ColumnNotFoundError { column_name: String },

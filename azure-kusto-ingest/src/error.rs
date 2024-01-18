@@ -1,7 +1,5 @@
 //! Defines [Error] for representing failures in various operations.
 
-use thiserror;
-
 /// Error type for kusto ingestion operations.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

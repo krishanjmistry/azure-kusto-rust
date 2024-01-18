@@ -9,7 +9,6 @@ pub mod utils;
 use azure_kusto_data::prelude::KustoClient;
 
 use azure_storage_queues::QueueClient;
-use thiserror::Error;
 
 use crate::client_options::QueuedIngestClientOptions;
 
@@ -22,7 +21,7 @@ use rand::{rngs::StdRng, seq::SliceRandom, SeedableRng};
 
 pub const RESOURCE_REFRESH_PERIOD: Duration = Duration::from_secs(60 * 60);
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ResourceManagerError {
     #[error("Failed to obtain ingestion resources: {0}")]
     IngestClientResourcesError(#[from] ingest_client_resources::IngestionResourceError),

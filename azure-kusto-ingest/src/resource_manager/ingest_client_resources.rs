@@ -99,11 +99,11 @@ impl TryFrom<(&TableV1, &QueuedIngestClientOptions)> for InnerIngestClientResour
         Ok(Self {
             ingestion_queues: create_clients_vec(
                 &secured_ready_for_aggregation_queues,
-                &client_options.queue_service,
+                &client_options.queue_service_options,
             ),
             temp_storage_containers: create_clients_vec(
                 &temp_storage,
-                &client_options.blob_service,
+                &client_options.blob_service_options,
             ),
         })
     }

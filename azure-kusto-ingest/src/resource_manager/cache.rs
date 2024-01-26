@@ -1,4 +1,6 @@
 use std::{
+    error::Error,
+    future::Future,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -37,7 +39,54 @@ impl<T> Cached<T> {
     }
 }
 
-pub type ThreadSafeCachedValue<T> = Arc<RwLock<Cached<T>>>;
+#[derive(Debug, Clone)]
+pub struct ThreadSafeCachedValue<T>
+where
+    T: Clone,
+{
+    cache: Arc<RwLock<Cached<Option<T>>>>,
+}
+
+impl<T: Clone> ThreadSafeCachedValue<T> {
+    pub fn new(refresh_period: Duration) -> Self {
+        Self {
+            cache: Arc::new(RwLock::new(Cached::new(None, refresh_period))),
+        }
+    }
+
+    /// Fetches the latest value, either retrieving from cache if valid, or by executing the callback
+    pub async fn get<F, E: Error>(&self, callback: F) -> Result<T, E>
+    where
+        F: Future<Output = Result<T, E>>,
+    {
+        // First, try to get a value from the cache by obtaining a read lock
+        {
+            let cache = self.cache.read().await;
+            if !cache.is_expired() {
+                if let Some(cached_value) = cache.get() {
+                    return Ok(cached_value.clone());
+                }
+            }
+        }
+
+        // Obtain a write lock to refresh the cached value
+        let mut cache = self.cache.write().await;
+
+        // Again attempt to return from cache, check is done in case another thread
+        // refreshed the cached value while we were waiting on the write lock and its now valid
+        if !cache.is_expired() {
+            if let Some(cached_value) = cache.get() {
+                return Ok(cached_value.clone());
+            }
+        }
+
+        // Fetch new value by executing the callback, update the cache, and return the value
+        let fetched_value = callback.await?;
+        cache.update(Some(fetched_value.clone()));
+
+        Ok(fetched_value)
+    }
+}
 
 #[cfg(test)]
 mod tests {
